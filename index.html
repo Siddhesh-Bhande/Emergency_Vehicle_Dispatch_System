@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Emergency Vehicle Dispatch System</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+  </head>
+  <body>
+    <div class="header">
+      <h1>Emergency Vehicle Dispatch System</h1>
+    </div>
+    <div class="input-section">
+      <form>
+        <label for="start-location">Starting Location:</label>
+        <input type="text" id="start-location" name="start-location"><br>
+
+        <label for="end-location">Destination:</label>
+        <input type="text" id="end-location" name="end-location"><br>
+
+        <label for="vehicle-type">Vehicle Type:</label>
+        <select id="vehicle-type" name="vehicle-type">
+          <option value="ambulance">Ambulance</option>
+          <option value="fire-truck">Fire Truck</option>
+          <option value="police-car">Police Car</option>
+        </select>
+
+        <button type="button" onclick="calculateRoute()">Find Route</button>
+      </form>
+    </div>
+    <div class="map-section">
+      <div id="map"></div>
+    </div>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap"
+    async defer></script>
+    <script src="app.js"></script>
+  </body>
+  <script>
+		function dijkstra(graph, start, end) {
+		  const distances = {};
+		  const visited = {};
+		  const previous = {};
+		  const pq = new PriorityQueue();
+
+		  for (let vertex in graph) {
+			distances[vertex] = Infinity;
+		  }
+		  distances[start] = 0;
+
+		  pq.enqueue(start, 0);
+
+		  while (!pq.isEmpty()) {
+			const currentVertex = pq.dequeue().data;
+			if (currentVertex === end) {
+			  const path = [];
+			  while (previous[currentVertex]) {
+				path.push(currentVertex);
+				currentVertex = previous[currentVertex];
+			  }
+			  return path.concat(start).reverse();
+			}
+			if (!visited[currentVertex]) {
+			  visited[currentVertex] = true;
+			  for (let neighbor in graph[currentVertex]) {
+				const distance = distances[currentVertex] + graph[currentVertex][neighbor];
+				if (distance < distances[neighbor]) {
+				  distances[neighbor] = distance;
+				  previous[neighbor] = currentVertex;
+				  pq.enqueue(neighbor, distance);
+				}
+			  }
+			}
+		  }
+		}
+
+		function aStar(graph, start, end) {
+		  const openSet = new PriorityQueue();
+		  const closedSet = new Set();
+
+		  const gScore = {};
+		  const fScore = {};
+		  const cameFrom = {};
+
+		  for (let vertex in graph) {
+			gScore[vertex] = Infinity;
+			fScore[vertex] = Infinity;
+		  }
+		  gScore[start] = 0;
+		  fScore[start] = heuristic(start, end);
+
+		  openSet.enqueue(start, fScore[start]);
+
+		  while (!openSet.isEmpty()) {
+			const currentVertex = openSet.dequeue().data;
+			if (currentVertex === end) {
+			  const path = [];
+			  while (cameFrom[currentVertex]) {
+				path.push(currentVertex);
+				currentVertex = cameFrom[currentVertex];
+			  }
+			  return path.concat(start).reverse();
+			}
+			closedSet.add(currentVertex);
+
+			for (let neighbor in graph[currentVertex]) {
+			  if (closedSet.has(neighbor)) continue;
+
+			  const tentativeGScore = gScore[currentVertex] + graph[currentVertex][neighbor];
+			  if (tentativeGScore >= gScore[neighbor]) continue;
+
+			  cameFrom[neighbor] = currentVertex;
+			  gScore[neighbor] = tentativeGScore;
+			  fScore[neighbor] = gScore[neighbor] + heuristic(neighbor, end);
+
+			  if (!openSet.has(neighbor)) {
+				openSet.enqueue(neighbor, fScore[neighbor]);
+			  }
+			}
+		  }
+		}
+
+  </script>
+</html>
